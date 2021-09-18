@@ -27,12 +27,12 @@ from sklearn.model_selection import GridSearchCV
 
 
 MLFLOW_URI = "https://mlflow.lewagon.co/"
-EXPERIMENT_NAME = "[AUS] [MEL] [roadbusta] TaxiFarePipeline v1.2"
+EXPERIMENT_NAME = "[AUS] [MEL] [roadbusta] TaxiFarePipeline v1.7"
 STORAGE_LOCATION = params.STORAGE_LOCATION
 
 
 class Trainer(object):
-    def __init__(self, X, y, estimator, experiment_name, model_name):
+    def __init__(self, X, y, estimator, experiment_name, model_name, hyperparameters):
         """
             X: pandas DataFrame
             y: pandas Series
@@ -44,7 +44,11 @@ class Trainer(object):
         self.experiment_name = experiment_name
         self.mlflow_uri = MLFLOW_URI
         self.estimator = estimator
+
+        #For the pipeline
         self.model_name = model_name
+        self.hyperparameters = hyperparameters
+
 
     def set_experiment_name(self, experiment_name):
         '''defines the experiment name for MLFlow'''
@@ -74,6 +78,15 @@ class Trainer(object):
             ('preproc', preproc_pipe),
             ('estimator', self.estimator)
         ])
+
+        grid_search = GridSearchCV(self.pipeline,
+                                   param_grid=self.hyperparameters,
+                                   cv=5,
+                                   scoring="neg_mean_squared_error")
+
+        model = grid_search.best_estimator_
+
+        return model
 
     def run(self, model_name):
         self.set_pipeline()
@@ -121,7 +134,6 @@ class Trainer(object):
 
 
 
-
     # MLFlow methods
     @memoized_property
     def mlflow_client(self):
@@ -150,7 +162,7 @@ class Trainer(object):
 
 if __name__ == "__main__":
     #Experiment name
-    experiment_name = "[AUS] [MEL] [roadbusta] TaxiFare v1.6"
+    experiment_name = "[AUS] [MEL] [roadbusta] TaxiFare v1.7"
 
     # Get and clean data
     N = params.SAMPLES
@@ -173,7 +185,7 @@ if __name__ == "__main__":
     #Create an estimator dictionary
     n_jobs = 1
     estimators = {
-        "Linear Regression" : LinearRegression(n_jobs = n_jobs),
+        #"Linear Regression" : LinearRegression(n_jobs = n_jobs),
         "KNN" : KNeighborsRegressor(),
         "SVR" : SVR(),
         "Adaboost" : AdaBoostRegressor()
@@ -182,17 +194,19 @@ if __name__ == "__main__":
     #Create a estimator_params dictionary
     #May need to reconsider naming the parameters
     hyperparameters = {
-
-        "KNN" : {"n_neighbors" : [2, 5, 10],
-                     "weights" : ["uniform", "distance"],
-                   "leaf_size" : [15, 30, 45]
-                   },
-
-        "SVR" : {"kernel" : ["linear", "poly", "rbf"],
-                      "C" : [0.01, 0.1, 0.5, 1]
-                 },
-        "Adaboost" : {"learning_rate" : [1, 5, 10],
-                      "loss" : ["linear", "square", "exponential"]}
+        "KNN": {
+            "estimator__n_neighbors": [2, 5, 10],
+            "estimator__weights": ["uniform", "distance"],
+            "estimator__leaf_size": [15, 30, 45]
+        },
+        "SVR": {
+            "estimator__kernel": ["linear", "poly", "rbf"],
+            "estimator__C": [0.01, 0.1, 0.5, 1]
+        },
+        "Adaboost": {
+            "estimator__learning_rate": [1, 5, 10],
+            "estimator__loss": ["linear", "square", "exponential"]
+        }
     }
 
     for model_name, estimator in estimators.items():
@@ -200,13 +214,16 @@ if __name__ == "__main__":
         trainer_inst = Trainer(X_train, y_train,
                                estimator = estimator,
                                experiment_name = experiment_name,
-                               model_name = model_name)
+                               model_name = model_name,
+                               hyperparameters = hyperparameters[model_name])
 
         #build a pipeline
-        pipe = trainer_inst.set_pipeline()
+        # pipe = trainer_inst.set_pipeline()
+        trainer_inst.set_pipeline()
 
         # train
-        pipeline = trainer_inst.run(model_name)
+        # pipeline = trainer_inst.run(model_name)
+        trainer_inst.run(model_name)
 
         # evaluate
         rmse = trainer_inst.evaluate(X_val, y_val)
