@@ -82,7 +82,8 @@ class Trainer(object):
         self.grid_search = GridSearchCV(pipeline,
                                    param_grid=self.hyperparameters,
                                    cv=5,
-                                   scoring="neg_mean_squared_error")
+                                   scoring="neg_mean_squared_error",
+                                   n_jobs = -1)
 
 
 
