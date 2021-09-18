@@ -74,28 +74,28 @@ class Trainer(object):
             ('time', time_pipe, ['pickup_datetime'])
         ], remainder="drop")
 
-        self.pipeline = Pipeline([
+        pipeline = Pipeline([
             ('preproc', preproc_pipe),
             ('estimator', self.estimator)
         ])
 
-        grid_search = GridSearchCV(self.pipeline,
+        self.grid_search = GridSearchCV(pipeline,
                                    param_grid=self.hyperparameters,
                                    cv=5,
                                    scoring="neg_mean_squared_error")
 
-        model = grid_search.best_estimator_
 
-        return model
 
     def run(self, model_name):
         self.set_pipeline()
         self.mlflow_log_param("model", model_name)
-        self.pipeline.fit(self.X, self.y)
+        self.grid_search.fit(self.X, self.y)
+        self.model = self.grid_search.best_estimator_
+
 
     def evaluate(self, X_test, y_test):
         """evaluates the pipeline on df_test and return the RMSE"""
-        y_pred = self.pipeline.predict(X_test)
+        y_pred = self.model.predict(X_test)
         rmse = compute_rmse(y_pred, y_test)
         self.mlflow_log_metric("rmse", rmse)
         return round(rmse, 2)
