@@ -22,6 +22,9 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import SVR
 from sklearn.ensemble import AdaBoostRegressor
 
+#Grid Search
+from sklearn.model_selection import GridSearchCV
+
 
 MLFLOW_URI = "https://mlflow.lewagon.co/"
 EXPERIMENT_NAME = "[AUS] [MEL] [roadbusta] TaxiFarePipeline v1.2"
@@ -168,11 +171,28 @@ if __name__ == "__main__":
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.15)
 
     #Create an estimator dictionary
+    n_jobs = 1
     estimators = {
-        "Linear Regression" : LinearRegression(),
+        "Linear Regression" : LinearRegression(n_jobs = n_jobs),
         "KNN" : KNeighborsRegressor(),
         "SVR" : SVR(),
         "Adaboost" : AdaBoostRegressor()
+    }
+
+    #Create a estimator_params dictionary
+    #May need to reconsider naming the parameters
+    hyperparameters = {
+
+        "KNN" : {"n_neighbors" : [2, 5, 10],
+                     "weights" : ["uniform", "distance"],
+                   "leaf_size" : [15, 30, 45]
+                   },
+
+        "SVR" : {"kernel" : ["linear", "poly", "rbf"],
+                      "C" : [0.01, 0.1, 0.5, 1]
+                 },
+        "Adaboost" : {"learning_rate" : [1, 5, 10],
+                      "loss" : ["linear", "square", "exponential"]}
     }
 
     for model_name, estimator in estimators.items():
