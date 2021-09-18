@@ -11,7 +11,7 @@ STORAGE_LOCATION = params.STORAGE_LOCATION
 BUCKET_PATH = f"gs://{BUCKET_NAME}/{BUCKET_TRAIN_DATA_PATH}"
 
 
-def get_data(nrows=1000 ):
+def get_data(nrows=10000 ):
     '''returns a DataFrame with nrows from s3 bucket'''
     df = pd.read_csv(BUCKET_PATH, nrows=nrows)
     return df
