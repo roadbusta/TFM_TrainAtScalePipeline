@@ -4,9 +4,9 @@
 ### GCP Storage - - - - - - - - - - - - - - - - - - - - - -
 BUCKET_NAME = "wagon-data-695-gulay"
 
-BUCKET_TRAIN_DATA_PATH = 'data/train_10k.csv'
+BUCKET_TRAIN_DATA_PATH = 'data/train.csv'
 
 # STORAGE_LOCATION = 'models/simpletaxifare/model.joblib'
 STORAGE_LOCATION = 'models/TaxiFarePipeline/'
 
-SAMPLES = 10000
+SAMPLES = 100000
